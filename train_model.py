@@ -14,12 +14,15 @@ import torch
 
 torch.set_float32_matmul_precision("high")
 
+
+EPOCH = 10
+
 # %%
 data_decs = MotionDataDescription.build_from_folder("./Human Action Recognition")
 
 # %%
 
-datamodule = MotionDataModule(data_decs, batch_size=64, val_size=0.05)
+datamodule = MotionDataModule(data_decs, batch_size=64, val_size=0.2)
 # %%
 model = ClipHARModel(labels=data_decs.label)
 print(model)
@@ -49,7 +52,7 @@ early_stop_callback = EarlyStopping(
 trainer = L.Trainer(
     callbacks=[checkpoint_callback, early_stop_callback],
     logger=tb_logger,
-    max_epochs=15,
+    max_epochs=EPOCH,
     log_every_n_steps=20,
     # fast_dev_run=True,
 )
