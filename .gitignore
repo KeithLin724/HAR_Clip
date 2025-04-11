@@ -1,3 +1,4 @@
 .vscode/
 Human Action Recognition/
 *.zip
+__pycache__/
