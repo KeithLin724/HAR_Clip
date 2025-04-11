@@ -25,7 +25,7 @@ class MotionDataDescription:
             raise FileNotFoundError(f"Folder {folder} does not exist")
 
         # preprocess the train data
-        train_df = pd.read_csv(DEFAULT_CSV["train"])
+        train_df = pd.read_csv(folder / DEFAULT_CSV["train"])
 
         mapping_path = lambda x: folder / "train" / x
         train_df["filename"] = train_df["filename"].apply(mapping_path)
