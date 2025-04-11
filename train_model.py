@@ -15,7 +15,7 @@ import torch
 torch.set_float32_matmul_precision("high")
 
 # %%
-data_decs = MotionDataDescription.build_from_folder("data", with_plus=True)
+data_decs = MotionDataDescription.build_from_folder("./Human Action Recognition")
 
 # %%
 
