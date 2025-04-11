@@ -6,6 +6,7 @@ from typing import Callable
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR
+from dadaptation import DAdaptAdam
 
 CLIP_FEATURES = 768
 
@@ -105,18 +106,20 @@ class ClipHARModel(L.LightningModule):
         return out
 
     def configure_optimizers(self):
-        optimizer = optim.AdamW(self.parameters(), lr=1e-3, weight_decay=1e-2)
-        total_steps = 100000
+        # optimizer = optim.AdamW(self.parameters(), lr=1e-3, weight_decay=1e-2)
+        # total_steps = 100000
 
-        scheduler = CosineAnnealingLR(optimizer, T_max=total_steps, eta_min=1e-6)
+        # scheduler = CosineAnnealingLR(optimizer, T_max=total_steps, eta_min=1e-6)
 
-        return {
-            "optimizer": optimizer,
-            "lr_scheduler": {
-                "scheduler": scheduler,
-                "interval": "step",
-            },
-        }
+        # return {
+        #     "optimizer": optimizer,
+        #     "lr_scheduler": {
+        #         "scheduler": scheduler,
+        #         "interval": "step",
+        #     },
+        # }
+        optimizer = DAdaptAdam(self.parameters())
+        return optimizer
 
     def training_step(self, batch, batch_idx):
         x, y = batch
