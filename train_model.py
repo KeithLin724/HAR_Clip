@@ -51,7 +51,7 @@ trainer = L.Trainer(
     logger=tb_logger,
     max_epochs=15,
     log_every_n_steps=20,
-    fast_dev_run=True,
+    # fast_dev_run=True,
 )
 
 # %%
