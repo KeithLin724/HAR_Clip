@@ -28,7 +28,7 @@ python ./train_model.py
 
 ## Develop
 
-Here is the Develop Document : [English](./DEV.md), [Traditional Chinese](./Dev-zh.md)
+Here is Develop Document : [English](./DEV.md), [Traditional Chinese](./Dev-zh.md)
 
 ---
 
