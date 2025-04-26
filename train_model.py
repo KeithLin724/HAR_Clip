@@ -25,7 +25,7 @@ data_decs = MotionDataDescription.build_from_folder("./Human Action Recognition"
 datamodule = MotionDataModule(data_decs, batch_size=64, val_size=0.2)
 # %%
 model = ClipHARModel(labels=data_decs.label)
-print(model)
+# print(model)
 
 # %%
 # print(model)
@@ -54,7 +54,7 @@ trainer = L.Trainer(
     logger=tb_logger,
     max_epochs=EPOCH,
     log_every_n_steps=20,
-    # fast_dev_run=True,
+    fast_dev_run=True,
 )
 
 # %%
