@@ -7,6 +7,7 @@ import lightning as L
 from lightning.pytorch.loggers import TensorBoardLogger
 from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping
 
+from model import CNNHARModel
 from model import ClipHARModel
 from data import MotionDataDescription, MotionDataModule
 
@@ -22,15 +23,16 @@ data_decs = MotionDataDescription.build_from_folder("./Human Action Recognition"
 
 # %%
 
-datamodule = MotionDataModule(data_decs, batch_size=64, val_size=0.2)
+datamodule = MotionDataModule(data_decs, batch_size=32, val_size=0.2)
 # %%
-model = ClipHARModel(labels=data_decs.label)
-# print(model)
+model = CNNHARModel(labels=data_decs.label)
+# model = ClipHARModel(labels=data_decs.label)
+print(model)
 
 # %%
 # print(model)
 # %%
-tb_logger = TensorBoardLogger("logs", name="clip_har")
+tb_logger = TensorBoardLogger("logs", name="cnn_har")
 
 checkpoint_callback = ModelCheckpoint(
     monitor="val_loss",
@@ -50,12 +52,16 @@ early_stop_callback = EarlyStopping(
 
 # %%
 trainer = L.Trainer(
+    accelerator="gpu",
+    devices=1,
     callbacks=[checkpoint_callback, early_stop_callback],
     logger=tb_logger,
     max_epochs=EPOCH,
     log_every_n_steps=20,
-    fast_dev_run=True,
+    # fast_dev_run=True,
 )
 
 # %%
 trainer.fit(model, datamodule=datamodule)
+
+# %%
