@@ -5,3 +5,4 @@ __pycache__/
 logs/
 *_logs/
 output/
+test_results_*
