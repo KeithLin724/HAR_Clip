@@ -61,3 +61,9 @@ trainer = L.Trainer(
 
 # %%
 trainer.fit(model, datamodule=datamodule)
+
+# %%
+trainer.validate(model, datamodule=datamodule)
+
+
+# %%
