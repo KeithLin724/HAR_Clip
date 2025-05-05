@@ -4,3 +4,4 @@ Human Action Recognition/
 __pycache__/
 logs/
 *_logs/
+output/
