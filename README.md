@@ -26,6 +26,13 @@ conda env create -f environment.yml
 python ./train_model_clip.py
 ```
 
+## Test Model
+
+```sh
+# pre-train clip script
+python ./test_model_clip.py
+```
+
 ## Develop
 
 Here is Develop Document : [English](./DEV.md), [Traditional Chinese](./Dev-zh.md)
