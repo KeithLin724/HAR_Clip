@@ -7,6 +7,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from dadaptation import DAdaptAdam
+from .Cliploss import ClipLoss
+from transformers import CLIPTokenizer, CLIPProcessor
 
 CLIP_FEATURES = 768
 
@@ -35,30 +37,62 @@ class ClipHARModel(L.LightningModule):
         labels: list[str],
         prompt_mapping: dict = None,
         model_name: str = "openai/clip-vit-large-patch14-336",
-        # dropout: float = 0.1,
     ):
         super().__init__()
         label_num = len(labels)
 
+        # ---- 1. Load CLIP backbone ----
         self.model: CLIPModel = CLIPModel.from_pretrained(model_name)
+        self.tokenizer = CLIPTokenizer.from_pretrained(model_name)
 
-        self.weight_image_image = nn.Linear(CLIP_FEATURES, CLIP_FEATURES, bias=False)
+        # ---- 2. Freeze backbone (optional) ----
+        self.model.vision_model.requires_grad_(False)
+        self.model.text_model.requires_grad_(False)
+
+        # ---- 3. Linear classifier head ----
         self.weight_image = nn.Linear(CLIP_FEATURES, label_num)
-        self.weight_image_learnable = nn.Linear(CLIP_FEATURES, label_num)
 
-        # self.weight_image_text = nn.Linear(label_num, label_num)
-
-        # self.dropout = nn.Dropout(dropout)
-
+        # ---- 4. Text prompt features ----
         if prompt_mapping is None:
             prompt_mapping = self.DEFAULT_MAPPING
 
-        self.build_params(model_name, labels, prompt_mapping)
+        self.class_names = list(prompt_mapping.keys())
+        self.prompt_texts = list(prompt_mapping.values())
 
-        self.model.requires_grad_(False)
+        text_tokens = self.tokenizer(
+            self.prompt_texts, return_tensors='pt', padding=True, truncation=True
+        )
+        with torch.no_grad():
+            text_features = self.model.get_text_features(**text_tokens)
+            text_features = F.normalize(text_features, dim=-1)
 
-        self.save_hyperparameters(ignore="prompt_format")
+        # ✅ register_buffer 讓 text_features 跟著 model 移動，不需更新梯度
+        self.register_buffer("label_text_features", text_features)
+
+        # ---- 5. Loss ----
+        self.clip_loss_fn = ClipLoss()
         return
+
+    def compute_features(self, x):
+        device = self.model.device
+        self.input_ids = self.input_ids.to(device)
+        self.attention_mask = self.attention_mask.to(device)
+
+        outputs = self.model(
+            input_ids=self.input_ids,
+            attention_mask=self.attention_mask,
+            pixel_values=x,
+            return_dict=True,
+        )
+
+        image_features = outputs.image_embeds       # shape: [B, D]
+        text_features  = outputs.text_embeds        # shape: [num_labels, D]
+
+        logit_scale = self.model.logit_scale  # 這樣保留可導圖
+
+        # 再用 torch.exp 保留計算圖
+        logits = torch.exp(logit_scale) * image_feat @ text_feat.T
+        return image_features, text_features, logit_scale
 
     @torch.no_grad()
     def build_params(self, model_name: str, labels: list[str], prompt_mapping: dict):
@@ -122,25 +156,56 @@ class ClipHARModel(L.LightningModule):
         return optimizer
 
     def training_step(self, batch, batch_idx):
-        x, y = batch
-        y_hat = self(x)
-        loss = F.cross_entropy(y_hat, y)
+        x, y = batch  # x: images, y: class indices
 
-        acc = (y_hat.argmax(dim=1) == y).float().mean()
-        self.log_dict({"train_loss": loss, "train_acc": acc})
+        # 1. Image features
+        image_feat = self.model.get_image_features(pixel_values=x)  # [B, D]
+        image_feat = F.normalize(image_feat, dim=-1)
+
+        # 2. Text features
+        text_feat = self.label_text_features.to(image_feat.device)  # [C, D]
+        text_feat = F.normalize(text_feat, dim=-1)
+
+        # ✅ 3. Logit scale（保留參數本身）
+        logit_scale_raw = self.model.logit_scale  # 這是 nn.Parameter
+        logit_scale = logit_scale_raw.exp()       # 再拿來用在 loss 裡
+
+        # 4. 使用 ClipLoss 計算對比損失（需提供 targets）
+        loss = self.clip_loss_fn(image_feat, text_feat, logit_scale, targets=y)
+
+        # 5. 計算準確率
+        logits = logit_scale * image_feat @ text_feat.T
+        acc = (logits.argmax(dim=1) == y).float().mean()
+
+        # 6. Logging
+        self.log("train_loss", loss)
+        self.log("train_acc", acc)
 
         return loss
+
 
     @torch.inference_mode()
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        y_hat = self(x)
-        loss = F.cross_entropy(y_hat, y)
 
-        acc = (y_hat.argmax(dim=1) == y).float().mean()
+        # 1. Image features
+        image_feat = self.model.get_image_features(pixel_values=x)
+        image_feat = F.normalize(image_feat, dim=-1)
+
+        # 2. Text features
+        text_feat = self.label_text_features.to(image_feat.device)
+        text_feat = F.normalize(text_feat, dim=-1)
+
+        # ✅ 使用原始 logit_scale 參數
+        logit_scale_raw = self.model.logit_scale
+        logit_scale = logit_scale_raw.exp()
+
+        # 3. Loss & accuracy
+        loss = self.clip_loss_fn(image_feat, text_feat, logit_scale, targets=y)
+        logits = logit_scale * image_feat @ text_feat.T
+        acc = (logits.argmax(dim=1) == y).float().mean()
+
         self.log_dict({"val_loss": loss, "val_acc": acc})
-
-        return
 
     def predict_step(self, batch, batch_idx):
         return self(batch)
