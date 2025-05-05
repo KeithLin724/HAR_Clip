@@ -3,3 +3,6 @@ Human Action Recognition/
 *.zip
 __pycache__/
 logs/
+*_logs/
+output/
+test_results_*
