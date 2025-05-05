@@ -12,8 +12,10 @@ from data import MotionDataDescription, MotionDataModule
 
 import torch
 
-torch.set_float32_matmul_precision("high")
+SEED = 42
+torch.manual_seed(SEED)
 
+torch.set_float32_matmul_precision("high")
 
 EPOCH = 10
 
