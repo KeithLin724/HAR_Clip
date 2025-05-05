@@ -30,6 +30,10 @@ python ./train_model_clip.py
 
 Here is Develop Document : [English](./DEV.md), [Traditional Chinese](./Dev-zh.md)
 
+## Test Result
+
+About different model performance in [here](./Test_Result.md)
+
 ---
 
 ## Reference
