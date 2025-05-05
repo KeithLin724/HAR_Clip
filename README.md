@@ -23,7 +23,7 @@ conda env create -f environment.yml
 
 ```sh
 # pre-train clip script
-python ./train_model.py
+python ./train_model_clip.py
 ```
 
 ## Develop
