@@ -162,7 +162,11 @@ class ClipLoRaHARModel(L.LightningModule):
 
     @torch.inference_mode()
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
-        return self(batch)
+        input_ids = batch["input_ids"]
+        pixel_values = batch["pixel_values"]
+        attention_mask = batch["attention_mask"]
+        position_ids = batch["position_ids"]
+        return self(input_ids, pixel_values, attention_mask, position_ids)
 
     def inference__only_func(self):
         # build processor
