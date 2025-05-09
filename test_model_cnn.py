@@ -2,7 +2,7 @@
 import torch
 from test_utils import TestRunner
 
-from model import ClipHARModel
+from model import ClipHARModel,CNNHARModel
 from data import MotionDataDescription, MotionDataModule
 
 from lightning.pytorch.callbacks import ModelCheckpoint
@@ -19,8 +19,8 @@ datamodule = MotionDataModule(data_decs, batch_size=64, val_size=0.2)
 
 
 # %%
-model = ClipHARModel.load_from_checkpoint(
-    "./logs/clip_har/version_2/checkpoints/model-epoch=08-val_loss=0.18.ckpt"
+model = CNNHARModel.load_from_checkpoint(
+    "./logs/cnn_har/resnet18_fc512_drop0.3_lr0.001/checkpoints/model-epoch=06-val_loss=0.81.ckpt"
 )
 # %%
 print(model)
