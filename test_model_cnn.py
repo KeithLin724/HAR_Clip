@@ -36,6 +36,6 @@ test_runner = TestRunner.test_model(
 print(test_runner)
 
 # %%
-test_runner.to_folder(folder_name="test_results_clip_har")
+test_runner.to_folder(folder_name="test_results_cnn_har")
 
 # %%
