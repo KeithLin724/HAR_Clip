@@ -2,11 +2,9 @@ import lightning as L
 import torch
 import torch.nn as nn
 from peft import LoraConfig, get_peft_model, TaskType
-from transformers import CLIPModel
-from transformers import CLIPProcessor
+from transformers import CLIPModel, CLIPProcessor
+from transformers.models.clip.modeling_clip import clip_loss, CLIPOutput
 from dataclasses import dataclass, asdict
-
-from .ClipLoss import ClipLoss
 
 
 @dataclass(slots=True, frozen=True)
@@ -29,11 +27,30 @@ class ClipLoRaConfig:
 
 
 class ClipLoRaHARModel(L.LightningModule):
+    DEFAULT_MAPPING = {
+        "calling": "A photo of a person making a phone call",
+        "clapping": "A photo of a person enthusiastically clapping their hands",
+        "cycling": "A photo of a person riding a bicycle outdoors",
+        "dancing": "A photo of a person dancing with expressive movement",
+        "drinking": "A photo of a person drinking a beverage",
+        "eating": "A photo of a person eating a meal",
+        "fighting": "A photo of two people fighting or engaging in a physical altercation",
+        "hugging": "A photo of two people hugging each other",
+        "laughing": "A photo of a person laughing happily",
+        "listening_to_music": "A photo of a person wearing headphones and listening to music",
+        "running": "A photo of a person running at a steady pace",
+        "sitting": "A photo of a person sitting on a chair or bench",
+        "sleeping": "A photo of a person sleeping peacefully",
+        "texting": "A photo of a person texting on a smartphone",
+        "using_laptop": "A photo of a person using a laptop",
+    }
+
     def __init__(self, clip_config: dict):
         super().__init__()
         clip_config = ClipLoRaConfig(**clip_config)
+        self.model_name = clip_config.model_name
         self.model = self.build_peft_model(clip_config)
-        self.processor = CLIPProcessor.from_pretrained(clip_config.model_name)
+        # self.processor = CLIPProcessor.from_pretrained(clip_config.model_name)
 
         self.save_hyperparameters()
         return
@@ -74,21 +91,85 @@ class ClipLoRaHARModel(L.LightningModule):
 
     # about the forward
 
-    def forward(self, x): ...
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        pixel_values: torch.Tensor,
+        attention_mask: torch.Tensor = None,
+        position_ids: torch.Tensor = None,
+    ):
+
+        model_output: CLIPOutput = self.model(
+            input_ids=input_ids,
+            pixel_values=pixel_values,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+        )
+
+        return model_output
 
     def configure_optimizers(self): ...
 
-    def training_step(self, batch, batch_idx): ...
+    def training_step(self, batch, batch_idx):
+        input_ids = batch["input_ids"]
+        pixel_values = batch["pixel_values"]
+        attention_mask = batch["attention_mask"]
+        position_ids = batch["position_ids"]
+
+        model_output: CLIPOutput = self(
+            input_ids=input_ids,
+            pixel_values=pixel_values,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+        )
+
+        loss = clip_loss(model_output.logits_per_text)
+
+        self.log_dict({"training_loss", loss})
+        return loss
 
     @torch.inference_mode()
-    def validation_step(self, batch, batch_idx): ...
+    def validation_step(self, batch, batch_idx):
+        input_ids = batch["input_ids"]
+        pixel_values = batch["pixel_values"]
+        attention_mask = batch["attention_mask"]
+        position_ids = batch["position_ids"]
 
-    @torch.inference_mode()
-    def test_step(self, batch, batch_idx): ...
+        model_output: CLIPOutput = self(
+            input_ids=input_ids,
+            pixel_values=pixel_values,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+        )
+
+        loss = clip_loss(model_output.logits_per_text)
+
+        self.log_dict({"val_loss", loss})
+        return
 
     @torch.inference_mode()
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         return self(batch)
 
-    def inference_func(self):
-        return lambda: None
+    def inference__only_func(self):
+        # build processor
+        processor = CLIPProcessor.from_pretrained(self.model_name)
+
+        # pre-build the label
+        classes_names = list(self.DEFAULT_MAPPING.values())
+
+        inputs = processor(text=classes_names, return_tensors="pt", padding=True)
+
+        input_ids = inputs["input_ids"]
+        attention_mask = inputs["attention_mask"]
+
+        def model_forward_only(pixel_values: torch.Tensor):
+            model_output: CLIPOutput = self(
+                input_ids=input_ids,
+                pixel_values=pixel_values,
+                attention_mask=attention_mask,
+            )
+
+            return model_output.logits_per_image
+
+        return model_forward_only
