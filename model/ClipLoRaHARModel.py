@@ -124,13 +124,12 @@ class ClipLoRaHARModel(L.LightningModule):
         }
 
     def training_step(self, batch, batch_idx):
-        input_ids, pixel_values, attention_mask, position_ids = batch
+        input_ids, pixel_values, attention_mask = batch
 
         model_output: CLIPOutput = self(
             input_ids=input_ids,
             pixel_values=pixel_values,
             attention_mask=attention_mask,
-            position_ids=position_ids,
         )
 
         loss = clip_loss(model_output.logits_per_text)
@@ -140,13 +139,12 @@ class ClipLoRaHARModel(L.LightningModule):
 
     @torch.inference_mode()
     def validation_step(self, batch, batch_idx):
-        input_ids, pixel_values, attention_mask, position_ids = batch
+        input_ids, pixel_values, attention_mask = batch
 
         model_output: CLIPOutput = self(
             input_ids=input_ids,
             pixel_values=pixel_values,
             attention_mask=attention_mask,
-            position_ids=position_ids,
         )
 
         loss = clip_loss(model_output.logits_per_text)
@@ -156,8 +154,8 @@ class ClipLoRaHARModel(L.LightningModule):
 
     @torch.inference_mode()
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
-        input_ids, pixel_values, attention_mask, position_ids = batch
-        return self(input_ids, pixel_values, attention_mask, position_ids)
+        input_ids, pixel_values, attention_mask = batch
+        return self(input_ids, pixel_values, attention_mask)
 
     def inference__only_func(self):
         # build processor

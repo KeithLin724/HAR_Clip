@@ -82,7 +82,7 @@ class MotionDataset(Dataset):
             inputs["input_ids"].squeeze(0),
             inputs["pixel_values"].squeeze(0),
             inputs["attention_mask"].squeeze(0),
-            inputs["position_ids"].squeeze(0),
+            # inputs["position_ids"].squeeze(0),
         )
 
 
