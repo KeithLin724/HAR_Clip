@@ -76,13 +76,19 @@ class ClipLoRaHARModel(L.LightningModule):
 
     def forward(self, x): ...
 
+    def configure_optimizers(self): ...
+
     def training_step(self, batch, batch_idx): ...
 
+    @torch.inference_mode()
     def validation_step(self, batch, batch_idx): ...
 
+    @torch.inference_mode()
     def test_step(self, batch, batch_idx): ...
 
+    @torch.inference_mode()
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         return self(batch)
 
-    def configure_optimizers(self): ...
+    def inference_func(self):
+        return lambda: None
