@@ -73,7 +73,7 @@ class MotionDataset(Dataset):
 
         inputs = self.processor(
             images=image,
-            text=DEFAULT_MAPPING[labels],
+            text=DEFAULT_MAPPING[label],
             return_tensors="pt",
             padding=True,
         )
