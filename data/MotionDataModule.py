@@ -14,6 +14,7 @@ class MotionDataModule(L.LightningDataModule):
         processor: CLIPProcessor = None,
         num_workers: int = 4,
         pin_memory: bool = True,
+        for_fine_tuning: bool = False,
     ):
         """
         Initialize the MotionDataModule with data specifications and training parameters.
@@ -38,6 +39,7 @@ class MotionDataModule(L.LightningDataModule):
 
         self.num_workers = num_workers
         self.pin_memory = pin_memory
+        self.for_fine_tuning = for_fine_tuning
 
         return
 
@@ -48,11 +50,13 @@ class MotionDataModule(L.LightningDataModule):
             data=train_df,
             label_dict=self.data_desc.label_value,
             processor=self.processor,
+            for_fine_tuning=self.for_fine_tuning,
         )
         self.val_dataset = MotionDataset(
             data=val_df,
             label_dict=self.data_desc.label_value,
             processor=self.processor,
+            for_fine_tuning=self.for_fine_tuning,
         )
 
     def train_dataloader(self):
