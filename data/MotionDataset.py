@@ -69,6 +69,8 @@ class MotionDataset(Dataset):
 
             return images, labels
 
+        ## for fine-tuning
+
         inputs = self.processor(
             images=image,
             text=DEFAULT_MAPPING[labels],
