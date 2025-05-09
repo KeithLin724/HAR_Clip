@@ -65,7 +65,7 @@ class ClipLoRaHARModel(L.LightningModule):
         target_modules = (
             clip_config.target_modules
             if clip_config.target_modules is not None
-            else ClipLoRaConfig.build_target_modules(self.model)
+            else ClipLoRaConfig.build_target_modules(model)
         )
 
         peft_config = LoraConfig(
