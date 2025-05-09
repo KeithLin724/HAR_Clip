@@ -5,6 +5,7 @@ from peft import LoraConfig, get_peft_model, TaskType
 from transformers import CLIPModel, CLIPProcessor
 from transformers.models.clip.modeling_clip import clip_loss, CLIPOutput
 from dataclasses import dataclass, asdict
+from torch.optim.lr_scheduler import CosineAnnealingLR
 
 
 @dataclass(slots=True, frozen=True)
@@ -108,7 +109,19 @@ class ClipLoRaHARModel(L.LightningModule):
 
         return model_output
 
-    def configure_optimizers(self): ...
+    def configure_optimizers(self):
+        optimizer = torch.optim.AdamW(self.parameters(), lr=1e-4, weight_decay=0.01)
+        total_steps = 100000
+
+        scheduler = CosineAnnealingLR(optimizer, T_max=total_steps, eta_min=1e-6)
+
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "interval": "step",
+            },
+        }
 
     def training_step(self, batch, batch_idx):
         input_ids = batch["input_ids"]
