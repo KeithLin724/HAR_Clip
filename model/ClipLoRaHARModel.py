@@ -15,7 +15,7 @@ class ClipLoRaConfig:
     lora_alpha: int = 32
     lora_dropout: float = 0.1
     bias: str = "none"
-    task_type: TaskType = TaskType.FEATURE_EXTRACTION
+    task_type: TaskType = None
     target_modules: list[str] = None
 
     @staticmethod
