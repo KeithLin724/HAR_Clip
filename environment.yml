@@ -1,4 +1,4 @@
-name: har_clip
+name: har_clip-1
 channels:
   - defaults
 dependencies:
