@@ -20,7 +20,7 @@ datamodule = MotionDataModule(data_decs, batch_size=64, val_size=0.2)
 
 # %%
 model = CNNHARModel.load_from_checkpoint(
-    "./logs/cnn_har/resnet18_fc512_drop0.3_lr0.001/checkpoints/model-epoch=06-val_loss=0.81.ckpt"
+    "./logs/cnn_har/mobilenet_v2_fc512_drop0.3_lr0.001/checkpoints/model-epoch=09-val_loss=0.82.ckpt"
 )
 # %%
 print(model)
@@ -36,6 +36,6 @@ test_runner = TestRunner.test_model(
 print(test_runner)
 
 # %%
-test_runner.to_folder(folder_name="test_results_cnn_har")
+test_runner.to_folder(folder_name="test_results_cnn_mobilenet_v2_har")
 
 # %%

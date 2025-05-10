@@ -2,11 +2,11 @@
     "model_type": "<class 'model.CNNHARModel.CNNHARModel'>",
     "flops": 4193486336.0,
     "params": 11446863.0,
-    "run_time": 0.004271935939788818,
+    "run_time": 0.0031539199352264404,
     "test_result": [
         {
-            "val_loss": 0.23228736221790314,
-            "val_acc": 0.940079391002655
+            "val_loss": 0.3282932937145233,
+            "val_acc": 0.9083333611488342
         }
     ]
 }
