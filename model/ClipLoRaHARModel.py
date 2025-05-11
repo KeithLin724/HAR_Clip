@@ -190,7 +190,7 @@ class ClipLoRaHARModel(L.LightningModule):
 
         loss = clip_loss(model_output.logits_per_text)
 
-        self.log_dict({"val_loss": loss})
+        self.log_dict({"val_loss": loss}, sync_dist=True)
         return
 
     @torch.inference_mode()
