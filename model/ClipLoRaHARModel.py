@@ -6,9 +6,10 @@ from transformers import CLIPModel, CLIPProcessor
 from transformers.models.clip.modeling_clip import clip_loss, CLIPOutput
 from dataclasses import dataclass, asdict
 from torch.optim.lr_scheduler import CosineAnnealingLR
+from typing import Callable
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(slots=True)
 class ClipLoRaConfig:
     model_name: str = "openai/clip-vit-large-patch14-336"
     r: int = 16
@@ -19,12 +20,31 @@ class ClipLoRaConfig:
     target_modules: list[str] = None
 
     @staticmethod
-    def build_target_modules(model: nn.Module):
-        return [
-            name
-            for name, module in model.named_modules()
-            if isinstance(module, (torch.nn.Linear, torch.nn.Embedding))
-        ]
+    def build_target_modules(
+        model: nn.Module,
+        condition: Callable = lambda module_x: isinstance(
+            module_x, (torch.nn.Linear, torch.nn.Embedding)
+        ),
+    ):
+        return [name for name, module in model.named_modules() if condition(module)]
+
+    def lazy_build_target_modules(
+        self,
+        condition: Callable = lambda module_x: isinstance(
+            module_x, (torch.nn.Linear, torch.nn.Embedding)
+        ),
+    ):
+
+        model = CLIPModel.from_pretrained(self.model_name)
+        model.eval()
+
+        # update the target_modules
+        self.target_modules = self.build_target_modules(model, condition)
+
+        return self
+
+
+# TODO: Move processor in model
 
 
 class ClipLoRaHARModel(L.LightningModule):
@@ -51,7 +71,8 @@ class ClipLoRaHARModel(L.LightningModule):
         clip_config = ClipLoRaConfig(**clip_config)
         self.model_name = clip_config.model_name
         self.model = self.build_peft_model(clip_config)
-        # self.processor = CLIPProcessor.from_pretrained(clip_config.model_name)
+
+        self.build_params(clip_config)
 
         self.save_hyperparameters()
         return
@@ -92,19 +113,43 @@ class ClipLoRaHARModel(L.LightningModule):
 
     # about the forward
 
-    def forward(
-        self,
-        input_ids: torch.Tensor,
-        pixel_values: torch.Tensor,
-        attention_mask: torch.Tensor = None,
-        position_ids: torch.Tensor = None,
-    ):
+    @torch.no_grad()
+    @torch.inference_mode()
+    def build_params(self, clip_config: ClipLoRaConfig):
+        processor = CLIPProcessor.from_pretrained(clip_config.model_name)
+
+        labels = list(self.DEFAULT_MAPPING.values())
+
+        inputs = processor(text=labels, return_tensors="pt", padding=True)
+
+        self.input_ids = inputs["input_ids"]
+        self.attention_mask = inputs["attention_mask"]
+
+        self.input_ids.requires_grad_(False)
+        self.attention_mask.requires_grad_(False)
+
+        del processor, inputs
+
+        return
+
+    def find_labels_tensor(
+        self, query: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+
+        self.input_ids = self.input_ids.to(self.device)
+        self.attention_mask = self.attention_mask.to(self.device)
+
+        input_ids = self.input_ids[query]
+        attention_mask = self.attention_mask[query]
+        return input_ids, attention_mask
+
+    def forward(self, pixel_values: torch.Tensor, label_values: torch.Tensor):
+        input_ids, attention_mask = self.find_labels_tensor(label_values)
 
         model_output: CLIPOutput = self.model(
-            input_ids=input_ids,
             pixel_values=pixel_values,
-            attention_mask=attention_mask,
-            position_ids=position_ids,
+            input_ids=input_ids.to(self.device),
+            attention_mask=attention_mask.to(self.device),
         )
 
         return model_output
@@ -124,12 +169,10 @@ class ClipLoRaHARModel(L.LightningModule):
         }
 
     def training_step(self, batch, batch_idx):
-        input_ids, pixel_values, attention_mask = batch
+        pixel_values, label_values = batch
 
         model_output: CLIPOutput = self(
-            input_ids=input_ids,
-            pixel_values=pixel_values,
-            attention_mask=attention_mask,
+            pixel_values=pixel_values, label_values=label_values
         )
 
         loss = clip_loss(model_output.logits_per_text)
@@ -139,12 +182,10 @@ class ClipLoRaHARModel(L.LightningModule):
 
     @torch.inference_mode()
     def validation_step(self, batch, batch_idx):
-        input_ids, pixel_values, attention_mask = batch
+        pixel_values, label_values = batch
 
         model_output: CLIPOutput = self(
-            input_ids=input_ids,
-            pixel_values=pixel_values,
-            attention_mask=attention_mask,
+            pixel_values=pixel_values, label_values=label_values
         )
 
         loss = clip_loss(model_output.logits_per_text)
@@ -154,26 +195,16 @@ class ClipLoRaHARModel(L.LightningModule):
 
     @torch.inference_mode()
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
-        input_ids, pixel_values, attention_mask = batch
-        return self(input_ids, pixel_values, attention_mask)
+        pixel_values, label_values = batch
+        return self(pixel_values=pixel_values, label_values=label_values)
 
     def inference__only_func(self):
-        # build processor
-        processor = CLIPProcessor.from_pretrained(self.model_name)
-
-        # pre-build the label
-        classes_names = list(self.DEFAULT_MAPPING.values())
-
-        inputs = processor(text=classes_names, return_tensors="pt", padding=True)
-
-        input_ids = inputs["input_ids"]
-        attention_mask = inputs["attention_mask"]
+        label_values = len(ClipLoRaHARModel.DEFAULT_MAPPING)
 
         def model_forward_only(pixel_values: torch.Tensor):
             model_output: CLIPOutput = self(
-                input_ids=input_ids,
                 pixel_values=pixel_values,
-                attention_mask=attention_mask,
+                label_values=torch.arange(label_values).to(pixel_values.device),
             )
 
             return model_output.logits_per_image

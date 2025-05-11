@@ -31,7 +31,6 @@ class MotionDataset(Dataset):
         data: pd.DataFrame,
         label_dict: dict[str, int],
         processor: CLIPProcessor = None,
-        for_fine_tuning: bool = False,
     ):
         self.data = data
         self.label_dict = label_dict
@@ -45,7 +44,7 @@ class MotionDataset(Dataset):
         self.process_func = (
             self.clip_preprocess if processor is None else self.open_clip_preprocess
         )
-        self.for_fine_tuning = for_fine_tuning
+        return
 
     def __len__(self):
         return len(self.data)
@@ -63,27 +62,10 @@ class MotionDataset(Dataset):
         filename, label = data_item["filename"], data_item["label"]
         image = ImagePIL.open(filename)
 
-        if not self.for_fine_tuning:
-            images = self.process_func(image)
-            labels = torch.tensor(self.label_dict[label])
+        images = self.process_func(image)
+        labels = torch.tensor(self.label_dict[label])
 
-            return images, labels
-
-        ## for fine-tuning
-
-        inputs = self.processor(
-            images=image,
-            text=DEFAULT_MAPPING[label],
-            return_tensors="pt",
-            padding=True,
-        )
-
-        return (
-            inputs["input_ids"].squeeze(0),
-            inputs["pixel_values"].squeeze(0),
-            inputs["attention_mask"].squeeze(0),
-            # inputs["position_ids"].squeeze(0),
-        )
+        return images, labels
 
 
 class MotionTestDataset(Dataset):
