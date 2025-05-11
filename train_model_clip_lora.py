@@ -63,22 +63,8 @@ trainer = L.Trainer(
     logger=tb_logger,
     max_epochs=EPOCH,
     log_every_n_steps=20,
-    fast_dev_run=True,
+    # fast_dev_run=True,
 )
-
-# # %%
-# datamodule.setup("fit")
-# dummy = datamodule.train_dataloader()
-
-# # %%
-# for batch in dummy:
-#     print(batch)
-#     input_ids, pixel_values, attention_mask, position_ids = batch
-#     print(input_ids.shape)
-#     print(pixel_values.shape)
-#     print(attention_mask.shape)
-#     print(position_ids.shape)
-#     break
 
 
 # %%
