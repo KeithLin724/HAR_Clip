@@ -63,6 +63,7 @@ trainer = L.Trainer(
     logger=tb_logger,
     max_epochs=EPOCH,
     log_every_n_steps=20,
+    devices=[0, 1, 2, 3],
     # fast_dev_run=True,
 )
 
