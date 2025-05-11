@@ -27,7 +27,7 @@ data_decs = MotionDataDescription.build_from_folder("./Human Action Recognition"
 datamodule = MotionDataModule(data_decs, batch_size=8, val_size=0.2)
 # %%
 
-lora_config = ClipLoRaConfig(r=8, lora_alpha=16)
+lora_config = ClipLoRaConfig(r=16, lora_alpha=32)
 
 build_condition = lambda module_x: isinstance(module_x, (torch.nn.Linear))
 
