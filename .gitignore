@@ -3,6 +3,9 @@ Human Action Recognition/
 *.zip
 __pycache__/
 logs/
+*_logs/
+output/
+test_results_*
 checkpoints/
 test_results_cnn_mobilenet_v2_har/
 test_results_cnn_resnet18_har/
