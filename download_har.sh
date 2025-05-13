@@ -1,2 +1,2 @@
 #!/bin/bash
-kaggle datasets download meetnagadia/human-action-recognition-har-dataset
+kaggle datasets download meetnagadia/human-action-recognition-har-datasetbash

@@ -6,3 +6,7 @@ logs/
 *_logs/
 output/
 test_results_*
+checkpoints/
+test_results_cnn_mobilenet_v2_har/
+test_results_cnn_resnet18_har/
+test_results_cnn_resnet34_har/
