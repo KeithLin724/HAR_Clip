@@ -66,9 +66,10 @@ class ClipLoRaHARModel(L.LightningModule):
         "using_laptop": "A photo of a person using a laptop",
     }
 
-    def __init__(self, clip_config: dict):
+    def __init__(self, clip_config: dict | ClipLoRaConfig):
         super().__init__()
-        clip_config = ClipLoRaConfig(**clip_config)
+        if isinstance(clip_config, dict):
+            clip_config = ClipLoRaConfig(**clip_config)
         self.model_name = clip_config.model_name
         self.model = self.build_peft_model(clip_config)
 
