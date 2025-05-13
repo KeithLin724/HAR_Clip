@@ -29,7 +29,11 @@ datamodule = MotionDataModule(data_decs, batch_size=8, val_size=0.2)
 
 lora_config = ClipLoRaConfig(r=16, lora_alpha=32)
 
-build_condition = lambda module_x: isinstance(module_x, (torch.nn.Linear))
+build_condition = lambda name, module_x: isinstance(module_x, (torch.nn.Linear))
+# build_condition = lambda name, module_x: isinstance(module_x, (torch.nn.Linear, torch.nn.Embedding))
+# build_condition = lambda name, module_x: isinstance(module_x, (torch.nn.Linear, torch.nn.Embedding)) and "text_model" not in name
+# build_condition = lambda name, module_x: isinstance(module_x, (torch.nn.Linear, torch.nn.Embedding)) and "vision_model" not in name
+
 
 lora_config.lazy_build_target_modules(build_condition)
 

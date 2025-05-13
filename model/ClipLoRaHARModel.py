@@ -22,15 +22,17 @@ class ClipLoRaConfig:
     @staticmethod
     def build_target_modules(
         model: nn.Module,
-        condition: Callable = lambda module_x: isinstance(
+        condition: Callable = lambda name, module_x: isinstance(
             module_x, (torch.nn.Linear, torch.nn.Embedding)
         ),
     ):
-        return [name for name, module in model.named_modules() if condition(module)]
+        return [
+            name for name, module in model.named_modules() if condition(name, module)
+        ]
 
     def lazy_build_target_modules(
         self,
-        condition: Callable = lambda module_x: isinstance(
+        condition: Callable = lambda name, module_x: isinstance(
             module_x, (torch.nn.Linear, torch.nn.Embedding)
         ),
     ):
