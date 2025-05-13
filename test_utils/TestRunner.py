@@ -73,6 +73,7 @@ class TestRunner:
         dummy_input: torch.Tensor,
         datamodule: L.LightningDataModule = None,
         trainer: L.Trainer = None,
+        skip_profile: bool = False,
     ):
         logger.info(f"Testing model: {type(model)}")
 
@@ -85,10 +86,28 @@ class TestRunner:
         model.eval()
         model.freeze()
 
-        dummy_input = dummy_input.to(model.device)
+        if isinstance(dummy_input, tuple):
+            dummy_input = tuple(
+                [
+                    x.to(model.device) if isinstance(x, torch.Tensor) else x
+                    for x in dummy_input
+                ]
+            )
+        else:
+            dummy_input = dummy_input.to(model.device)
 
-        logger.info("Run profile...")
-        flops, params = profile(model, inputs=(dummy_input,))
+        if not skip_profile:
+
+            logger.info("Run profile...")
+
+            inputs = (
+                (dummy_input,) if not isinstance(dummy_input, tuple) else dummy_input
+            )
+
+            flops, params = profile(model, inputs=inputs)
+        else:
+            logger.info("Skip profile...")
+            flops, params = "Skipped", "Skipped"
 
         logger.info("Run summary...")
         summary_out = summary(
@@ -110,6 +129,8 @@ class TestRunner:
         model.cuda()
 
         run_func = lambda: model(dummy_input)
+        if isinstance(dummy_input, tuple):
+            run_func = lambda: model(*dummy_input)
 
         _, run_time = timed(run_func)
         logger.info(f"Model run time: {run_time:.2f} s")

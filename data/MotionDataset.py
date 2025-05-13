@@ -6,6 +6,24 @@ from transformers import CLIPProcessor
 
 DEFAULT_MODEL = "openai/clip-vit-large-patch14-336"
 
+DEFAULT_MAPPING = {
+    "calling": "A photo of a person making a phone call",
+    "clapping": "A photo of a person enthusiastically clapping their hands",
+    "cycling": "A photo of a person riding a bicycle outdoors",
+    "dancing": "A photo of a person dancing with expressive movement",
+    "drinking": "A photo of a person drinking a beverage",
+    "eating": "A photo of a person eating a meal",
+    "fighting": "A photo of two people fighting or engaging in a physical altercation",
+    "hugging": "A photo of two people hugging each other",
+    "laughing": "A photo of a person laughing happily",
+    "listening_to_music": "A photo of a person wearing headphones and listening to music",
+    "running": "A photo of a person running at a steady pace",
+    "sitting": "A photo of a person sitting on a chair or bench",
+    "sleeping": "A photo of a person sleeping peacefully",
+    "texting": "A photo of a person texting on a smartphone",
+    "using_laptop": "A photo of a person using a laptop",
+}
+
 
 class MotionDataset(Dataset):
     def __init__(
@@ -26,6 +44,7 @@ class MotionDataset(Dataset):
         self.process_func = (
             self.clip_preprocess if processor is None else self.open_clip_preprocess
         )
+        return
 
     def __len__(self):
         return len(self.data)
