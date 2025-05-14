@@ -18,7 +18,7 @@ datamodule = MotionDataModule(data_decs, batch_size=64, val_size=0.2)
 
 
 # %%
-model = ClipBaselineModel()
+model = ClipBaselineModel()  # use_prompt=False is use keyword
 # %%
 print(model)
 
@@ -33,6 +33,7 @@ test_runner = TestRunner.test_model(
 print(test_runner)
 
 # %%
+# folder_name="test_results_clip_har_baseline_label_version" for use_prompt=False
 test_runner.to_folder(folder_name="test_results_clip_har_baseline")
 
 # %%
