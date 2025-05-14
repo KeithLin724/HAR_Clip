@@ -35,7 +35,7 @@ class ClipHARModel(L.LightningModule):
         labels: list[str],
         prompt_mapping: dict = None,
         model_name: str = "openai/clip-vit-large-patch14-336",
-        # dropout: float = 0.1,
+        use_prompt: bool = True,
     ):
         super().__init__()
         label_num = len(labels)
@@ -46,14 +46,10 @@ class ClipHARModel(L.LightningModule):
         self.weight_image = nn.Linear(CLIP_FEATURES, label_num)
         self.weight_image_learnable = nn.Linear(CLIP_FEATURES, label_num)
 
-        # self.weight_image_text = nn.Linear(label_num, label_num)
-
-        # self.dropout = nn.Dropout(dropout)
-
         if prompt_mapping is None:
             prompt_mapping = self.DEFAULT_MAPPING
 
-        self.build_params(model_name, labels, prompt_mapping)
+        self.build_params(model_name, labels, prompt_mapping, use_prompt)
 
         self.model.requires_grad_(False)
 
@@ -61,10 +57,13 @@ class ClipHARModel(L.LightningModule):
         return
 
     @torch.no_grad()
-    def build_params(self, model_name: str, labels: list[str], prompt_mapping: dict):
+    def build_params(
+        self, model_name: str, labels: list[str], prompt_mapping: dict, use_prompt: bool
+    ):
         processor = CLIPProcessor.from_pretrained(model_name)
 
-        labels = [prompt_mapping.get(label, label) for label in labels]
+        if use_prompt:
+            labels = [prompt_mapping.get(label, label) for label in labels]
 
         inputs = processor(text=labels, return_tensors="pt", padding=True)
 
