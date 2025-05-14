@@ -128,9 +128,16 @@ class TestRunner:
 
         model.cuda()
 
-        run_func = lambda: model(dummy_input)
         if isinstance(dummy_input, tuple):
+            dummy_input = tuple(
+                [
+                    x.to(model.device) if isinstance(x, torch.Tensor) else x
+                    for x in dummy_input
+                ]
+            )
             run_func = lambda: model(*dummy_input)
+        else:
+            run_func = lambda: model(dummy_input.to(model.device))
 
         _, run_time = timed(run_func)
         logger.info(f"Model run time: {run_time:.2f} s")
