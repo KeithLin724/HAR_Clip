@@ -201,7 +201,7 @@ class ClipLoRaHARModel(L.LightningModule):
         pixel_values, label_values = batch
         return self(pixel_values=pixel_values, label_values=label_values)
 
-    def inference__only_func(self):
+    def inference_only_func(self):
         label_values = len(ClipLoRaHARModel.DEFAULT_MAPPING)
 
         def model_forward_only(pixel_values: torch.Tensor):
