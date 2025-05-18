@@ -2,7 +2,7 @@
 
 ---
 
-## LoRA Clip (torch.nn.Linear, torch.nn.Embedding)
+## LoRA Clip (torch.nn.Linear)
 
 ### Flop
 
