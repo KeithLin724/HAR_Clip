@@ -8,6 +8,8 @@ from dataclasses import dataclass, asdict
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from typing import Callable
 
+from .ClipBaselineModel import ClipBaselineModel
+
 
 @dataclass(slots=True)
 class ClipLoRaConfig:
@@ -201,15 +203,11 @@ class ClipLoRaHARModel(L.LightningModule):
         pixel_values, label_values = batch
         return self(pixel_values=pixel_values, label_values=label_values)
 
-    def inference_only_func(self):
-        label_values = len(ClipLoRaHARModel.DEFAULT_MAPPING)
+    def inference_only(self):
 
-        def model_forward_only(pixel_values: torch.Tensor):
-            model_output: CLIPOutput = self(
-                pixel_values=pixel_values,
-                label_values=torch.arange(label_values).to(pixel_values.device),
-            )
+        clip_baseline_model = ClipBaselineModel(use_prompt=True)
+        clip_baseline_model.model = self.model
 
-            return model_output.logits_per_image
+        clip_baseline_model.model_name = self.model_name
 
-        return model_forward_only
+        return clip_baseline_model

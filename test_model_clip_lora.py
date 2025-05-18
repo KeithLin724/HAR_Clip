@@ -1,4 +1,10 @@
 # %%
+import os
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+
+
+# %%
 import torch
 from test_utils import TestRunner
 
@@ -24,12 +30,13 @@ model = ClipLoRaHARModel.load_from_checkpoint(
 # %%
 print(model)
 
-
+model = model.inference_only()
+print(model)
 # %%
-label_value = torch.arange(len(ClipLoRaHARModel.DEFAULT_MAPPING))
+# label_value = torch.arange(len(ClipLoRaHARModel.DEFAULT_MAPPING))
 test_runner = TestRunner.test_model(
     model=model,
-    dummy_input=(torch.randn(1, 3, 336, 336), label_value),
+    dummy_input=torch.randn(1, 3, 336, 336),
     datamodule=datamodule,
     skip_profile=True,
 )
@@ -37,6 +44,6 @@ test_runner = TestRunner.test_model(
 print(test_runner)
 
 # %%
-test_runner.to_folder(folder_name="test_results_clip_lora_har")
+test_runner.to_folder(folder_name="test_results_clip_lora_har_new")
 
 # %%
