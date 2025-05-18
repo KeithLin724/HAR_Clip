@@ -27,9 +27,15 @@ data_decs = MotionDataDescription.build_from_folder("./Human Action Recognition"
 datamodule = MotionDataModule(data_decs, batch_size=8, val_size=0.2)
 # %%
 
+# TODO: check other lora config
 lora_config = ClipLoRaConfig(r=16, lora_alpha=32)
 
-build_condition = lambda module_x: isinstance(module_x, (torch.nn.Linear))
+# TODO: add lora in different condition
+build_condition = lambda name, module_x: isinstance(module_x, (torch.nn.Linear))
+# build_condition = lambda name, module_x: isinstance(module_x, (torch.nn.Linear, torch.nn.Embedding))
+# build_condition = lambda name, module_x: isinstance(module_x, (torch.nn.Linear, torch.nn.Embedding)) and "text_model" not in name
+# build_condition = lambda name, module_x: isinstance(module_x, (torch.nn.Linear, torch.nn.Embedding)) and "vision_model" not in name
+
 
 lora_config.lazy_build_target_modules(build_condition)
 
@@ -58,12 +64,13 @@ early_stop_callback = EarlyStopping(
 )
 
 # %%
+# Initialize the Lightning Trainer with callbacks, logger, and multi-GPU support
 trainer = L.Trainer(
     callbacks=[checkpoint_callback, early_stop_callback],
     logger=tb_logger,
     max_epochs=EPOCH,
     log_every_n_steps=20,
-    devices=[0, 1, 2, 3],
+    devices=[0, 1, 2, 3],  # Use 4 GPUs (IDs 0-3)
     # fast_dev_run=True,
 )
 
