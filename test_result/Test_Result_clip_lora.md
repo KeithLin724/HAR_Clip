@@ -8,13 +8,14 @@
 
 ```json
 {
-    "model_type": "<class 'model.ClipLoRaHARModel.ClipLoRaHARModel'>",
+    "model_type": "<class 'model.ClipBaselineModel.ClipBaselineModel'>",
     "flops": "Skipped",
     "params": "Skipped",
-    "run_time": 0.04120576095581055,
+    "run_time": 0.04087603378295898,
     "test_result": [
         {
-            "val_loss": 3.990445852279663
+            "val_acc": 0.9932539463043213,
+            "val_loss": 0.023383110761642456
         }
     ]
 }
@@ -26,7 +27,7 @@
 ==========================================================================================================================================================================================================================================================
 Layer (type:depth-idx)                                                      Input Shape               Output Shape              Param #                   Param %                   Kernel Shape              Mult-Adds                 Trainable
 ==========================================================================================================================================================================================================================================================
-ClipLoRaHARModel                                                            [1, 3, 336, 336]          [1, 577, 1024]            --                             --                   --                        --                        False
+ClipBaselineModel                                                           [1, 3, 336, 336]          [1, 577, 1024]            --                             --                   --                        --                        False
 ├─PeftModel: 1-1                                                            --                        [1, 577, 1024]            --                             --                   --                        --                        False
 │    └─LoraModel: 2-1                                                       --                        --                        --                             --                   --                        --                        False
 │    │    └─CLIPModel: 3-1                                                  --                        [1, 577, 1024]            (437,729,537)             100.00%                   --                        2,551,722,240             False
@@ -36,7 +37,7 @@ Trainable params: 0
 Non-trainable params: 437,729,537
 Total mult-adds (Units.GIGABYTES): 2.55
 ==========================================================================================================================================================================================================================================================
-Input size (MB): 1.36
+Input size (MB): 1.35
 Forward/backward pass size (MB): 2630.58
 Params size (MB): 1750.91
 Estimated Total Size (MB): 4382.85
@@ -46,7 +47,7 @@ Estimated Total Size (MB): 4382.85
 ### Model Structure
 
 ```txt
-ClipLoRaHARModel(
+ClipBaselineModel(
   (model): PeftModel(
     (base_model): LoraModel(
       (model): CLIPModel(
