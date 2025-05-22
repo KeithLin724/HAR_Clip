@@ -33,8 +33,8 @@ lora_config = ClipLoRaConfig(r=16, lora_alpha=32)
 # TODO: add lora in different condition
 build_condition = lambda name, module_x: isinstance(module_x, (torch.nn.Linear))
 # build_condition = lambda name, module_x: isinstance(module_x, (torch.nn.Linear, torch.nn.Embedding))
-# build_condition = lambda name, module_x: isinstance(module_x, (torch.nn.Linear, torch.nn.Embedding)) and "text_model" not in name
-# build_condition = lambda name, module_x: isinstance(module_x, (torch.nn.Linear, torch.nn.Embedding)) and "vision_model" not in name
+# build_condition = lambda name, module_x: isinstance(module_x, (torch.nn.Linear)) and "text_model" in name
+# build_condition = lambda name, module_x: isinstance(module_x, (torch.nn.Linear)) and "vision_model" in name
 
 
 lora_config.lazy_build_target_modules(build_condition)
